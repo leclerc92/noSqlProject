@@ -1,0 +1,35 @@
+services:
+  # 1. Ton application Web
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis-db
+      - mongo-db
+    volumes:
+      - .:/app # Permet de modifier le code sans relancer le build
+      - /app/node_modules
+
+  # 2. La base Redis (Ta responsabilité)
+  redis-db:
+    image: redis:alpine
+    container_name: mon-projet-redis
+    ports:
+      - "6379:6379" # Ouvert pour tes tests terminaux
+    volumes:
+      - redis-data:/data # Persistance des données
+
+  # 3. La base Mongo (Responsabilité Binôme - tu prépares juste le terrain)
+  mongo-db:
+    image: mongo:latest
+    container_name: mon-projet-mongo
+    ports:
+      - "27017:27017" # Ouvert pour ses tests terminaux
+    volumes:
+      - mongo-data:/data/db # Persistance des données
+
+# Définition des volumes pour la persistance
+volumes:
+  redis-data:
+  mongo-data: 
