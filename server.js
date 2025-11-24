@@ -3,9 +3,14 @@ const bodyParser = require('body-parser');
 const redis = require('redis');
 const mongoose = require('mongoose');
 const path = require('path');
-const cors = require('cors'); // npm install cors (Recommandé pour éviter les bugs en dev)
+const cors = require('cors');
+const Feedback = require('./models/Feedback');
 
 const app = express();
+
+// Helper pour logs de debug (actifs uniquement en dev)
+const DEBUG = process.env.NODE_ENV !== 'production';
+const debugLog = (...args) => DEBUG && console.log(...args);
 
 // Middleware
 app.use(cors());
@@ -24,49 +29,89 @@ redisClient.on('error', (err) => console.log('Redis Client Error', err));
 })();
 
 // --- 2. CONFIG MONGO (PARTIE BINÔME) ---
-// TODO: Ton binôme décommente ça
-/*
 mongoose.connect('mongodb://mongo-db:27017/feedback-app')
   .then(() => console.log('✅ Connecté à MongoDB'))
   .catch(err => console.error(err));
-*/
 
 // --- 3. ROUTES API (C'est là que le React va taper) ---
 
 // Route pour récupérer le compteur (GET)
 app.get('/api/stats', async (req, res) => {
-    const count = await redisClient.get('counter_feedbacks') || 0;
-    res.json({ count: parseInt(count) });
+    try {
+        const { recipeId } = req.query;
+        debugLog(`📊 GET /api/stats - recipeId: ${recipeId}`);
+
+        if (!recipeId) {
+            debugLog('❌ recipeId manquant');
+            return res.status(400).json({ error: 'recipeId is required' });
+        }
+
+        const redisKey = `counter_feedbacks:${recipeId}`;
+        const count = await redisClient.get(redisKey);
+        debugLog(`✅ Redis key: ${redisKey}, count: ${count || 0}`);
+        res.json({ counter: parseInt(count || 0) });
+    } catch (error) {
+        console.error('❌ Erreur /api/stats:', error);
+        res.status(500).json({ counter: 0 });
+    }
 });
 
 // Route pour envoyer le formulaire (POST)
 app.post('/api/feedback', async (req, res) => {
-    const { author, content } = req.body; // Le React enverra du JSON { "author": "...", "content": "..." }
+    const { recipeId, author, content } = req.body;
+    debugLog(`💬 POST /api/feedback - recipeId: ${recipeId}, author: ${author}`);
+
+    // Validation des données
+    if (!recipeId || !author?.trim() || !content?.trim()) {
+        return res.status(400).json({
+            success: false,
+            error: "recipeId, author et content sont requis"
+        });
+    }
 
     try {
-        // A. Redis
-        const newCount = await redisClient.incr('counter_feedbacks');
+        // A. Redis - Incrémenter le compteur spécifique à la recette
+        const redisKey = `counter_feedbacks:${recipeId}`;
+        const newCount = await redisClient.incr(redisKey);
+        debugLog(`✅ Redis incrementé - key: ${redisKey}, newCount: ${newCount}`);
 
-        // B. Mongo (TODO Binôme)
-        // const newFeedback = new FeedbackModel({ author, content });
-        // await newFeedback.save();
+        // B. Mongo - Sauvegarder le feedback avec recipeId
+        const newFeedback = new Feedback({ recipeId, author, content });
+        await newFeedback.save();
+        debugLog(`✅ Feedback sauvegardé dans MongoDB - id: ${newFeedback._id}`);
 
         // Réponse JSON obligatoire pour React
         res.json({
             success: true,
             message: "Sauvegardé !",
-            newCount: newCount
+            newCount: newCount,
+            feedback: newFeedback
         });
 
     } catch (error) {
-        console.error(error);
+        console.error('❌ Erreur /api/feedback:', error);
         res.status(500).json({ success: false, error: "Erreur serveur" });
     }
 });
 
-// --- 4. GESTION DU FRONTEND ---
-// Toutes les autres requêtes renvoient l'app React (pour gérer le routing React)
-// Express 5 nécessite une approche différente pour les routes catch-all
+// Route pour récupérer tous les avis (GET)
+app.get('/api/reviews', async (req, res) => {
+    try {
+        const { recipeId } = req.query;
+        debugLog(`📝 GET /api/reviews - recipeId: ${recipeId}`);
+
+        // Filtrer par recipeId si fourni, sinon récupérer tous les feedbacks
+        const filter = recipeId ? { recipeId: parseInt(recipeId) } : {};
+        const reviews = await Feedback.find(filter).sort({ createdAt: -1 });
+        debugLog(`✅ ${reviews.length} avis trouvés pour recipeId: ${recipeId}`);
+
+        res.json(reviews);
+    } catch (error) {
+        console.error('❌ Erreur /api/reviews:', error);
+        res.status(500).json({ success: false, error: "Erreur serveur" });
+    }
+});
+
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'client/dist/index.html'));
 });

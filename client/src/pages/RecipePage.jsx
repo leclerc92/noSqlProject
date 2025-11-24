@@ -87,14 +87,14 @@ function RecipePage() {
 
         {/* Section avis à droite */}
         <aside className="reviews-sidebar">
-          <Stats key={`stats-${refreshKey}`} />
-          
+          <Stats recipeId={recipe.id} key={`stats-${refreshKey}`} />
+
           <div className="review-form-container">
             <h2>Laissez votre avis</h2>
-            <ReviewForm onReviewSubmitted={handleReviewSubmitted} />
+            <ReviewForm recipeId={recipe.id} onReviewSubmitted={handleReviewSubmitted} />
           </div>
 
-          <ReviewList key={`reviews-${refreshKey}`} />
+          <ReviewList recipeId={recipe.id} key={`reviews-${refreshKey}`} />
         </aside>
       </div>
     </div>

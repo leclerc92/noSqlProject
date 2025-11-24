@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 
-function ReviewForm({ onReviewSubmitted }) {
+function ReviewForm({ recipeId, onReviewSubmitted }) {
   const [formData, setFormData] = useState({
     author: '',
     content: ''
@@ -33,6 +33,7 @@ function ReviewForm({ onReviewSubmitted }) {
 
     try {
       const response = await axios.post('/api/feedback', {
+        recipeId: recipeId,
         author: formData.author.trim(),
         content: formData.content.trim()
       })

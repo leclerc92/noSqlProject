@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
-function Stats() {
+function Stats({ recipeId }) {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchStats()
-  }, [])
+  }, [recipeId])
 
   const fetchStats = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/stats')
+      const response = await axios.get(`/api/stats?recipeId=${recipeId}`)
       setStats(response.data)
       setError(null)
     } catch (err) {

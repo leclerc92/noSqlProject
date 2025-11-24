@@ -8,28 +8,26 @@ services:
       - redis-db
       - mongo-db
     volumes:
-      - .:/app # Permet de modifier le code sans relancer le build
+      - .:/app
       - /app/node_modules
+      - /app/client/dist
 
-  # 2. La base Redis (Ta responsabilité)
   redis-db:
     image: redis:alpine
     container_name: mon-projet-redis
     ports:
-      - "6379:6379" # Ouvert pour tes tests terminaux
+      - "6379:6379"
     volumes:
-      - redis-data:/data # Persistance des données
+      - redis-data:/data
 
-  # 3. La base Mongo (Responsabilité Binôme - tu prépares juste le terrain)
   mongo-db:
     image: mongo:latest
     container_name: mon-projet-mongo
     ports:
-      - "27017:27017" # Ouvert pour ses tests terminaux
+      - "27017:27017"
     volumes:
-      - mongo-data:/data/db # Persistance des données
+      - mongo-data:/data/db
 
-# Définition des volumes pour la persistance
 volumes:
   redis-data:
   mongo-data: 

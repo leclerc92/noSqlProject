@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
-function ReviewList() {
+function ReviewList({ recipeId }) {
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchReviews()
-  }, [])
+  }, [recipeId])
 
   const fetchReviews = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/reviews')
+      const response = await axios.get(`/api/reviews?recipeId=${recipeId}`)
       setReviews(response.data)
       setError(null)
     } catch (err) {
