@@ -17,9 +17,15 @@ app.use(cors());
 app.use(bodyParser.json()); // IMPORTANT : On lit maintenant du JSON
 app.use(express.static(path.join(__dirname, 'client/dist'))); // On sert les fichiers du React buildé
 
+const isDocker = process.env.DOCKER === 'true';
+
+const MONGODB_URI = isDocker ? 'mongo-db' : 'localhost';
+
+const REDIS_HOST = isDocker ? 'redis-db' : 'localhost';
+
 // --- 1. CONFIG REDIS (TA PARTIE) ---
 const redisClient = redis.createClient({
-    url: process.env.REDIS_URL || 'redis://redis-db:6379'
+    url: process.env.REDIS_URL || `redis://${REDIS_HOST}:6379`
 });
 redisClient.on('error', (err) => console.log('Redis Client Error', err));
 
@@ -29,7 +35,7 @@ redisClient.on('error', (err) => console.log('Redis Client Error', err));
 })();
 
 // --- 2. CONFIG MONGO (PARTIE BINÔME) ---
-mongoose.connect('mongodb://mongo-db:27017/feedback-app')
+mongoose.connect(`mongodb://${MONGODB_URI}:27017/feedback-app`)
   .then(() => console.log('✅ Connecté à MongoDB'))
   .catch(err => console.error(err));
 
@@ -58,7 +64,7 @@ app.get('/api/stats', async (req, res) => {
 
 // Route pour envoyer le formulaire (POST)
 app.post('/api/feedback', async (req, res) => {
-    const { recipeId, author, content } = req.body;
+    const { recipeId, author, content, rating } = req.body;
     debugLog(`💬 POST /api/feedback - recipeId: ${recipeId}, author: ${author}`);
 
     // Validation des données
@@ -76,7 +82,7 @@ app.post('/api/feedback', async (req, res) => {
         debugLog(`✅ Redis incrementé - key: ${redisKey}, newCount: ${newCount}`);
 
         // B. Mongo - Sauvegarder le feedback avec recipeId
-        const newFeedback = new Feedback({ recipeId, author, content });
+        const newFeedback = new Feedback({ recipeId, author, content, rating});
         await newFeedback.save();
         debugLog(`✅ Feedback sauvegardé dans MongoDB - id: ${newFeedback._id}`);
 

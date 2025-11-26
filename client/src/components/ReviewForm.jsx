@@ -1,11 +1,29 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 
+// Composant SVG pour l'étoile
+const StarIcon = ({ filled = false }) => (
+  <svg 
+    width="24" 
+    height="24" 
+    viewBox="0 0 24 24" 
+    fill={filled ? "currentColor" : "none"}
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+)
+
 function ReviewForm({ recipeId, onReviewSubmitted }) {
   const [formData, setFormData] = useState({
     author: '',
-    content: ''
+    content: '',
+    rating: 0
   })
+  const [hoveredRating, setHoveredRating] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
 
@@ -28,6 +46,11 @@ function ReviewForm({ recipeId, onReviewSubmitted }) {
       return
     }
 
+    if (formData.rating === 0) {
+      setMessage({ type: 'error', text: 'Veuillez donner une note' })
+      return
+    }
+
     setIsSubmitting(true)
     setMessage({ type: '', text: '' })
 
@@ -35,11 +58,12 @@ function ReviewForm({ recipeId, onReviewSubmitted }) {
       const response = await axios.post('/api/feedback', {
         recipeId: recipeId,
         author: formData.author.trim(),
-        content: formData.content.trim()
+        content: formData.content.trim(),
+        rating: formData.rating
       })
 
       setMessage({ type: 'success', text: 'Merci pour votre avis ! 🎉' })
-      setFormData({ author: '', content: '' })
+      setFormData({ author: '', content: '', rating: 0 })
       
       // Notifie le parent pour rafraîchir les stats
       if (onReviewSubmitted) {
@@ -70,6 +94,28 @@ function ReviewForm({ recipeId, onReviewSubmitted }) {
           disabled={isSubmitting}
           required
         />
+      </div>
+
+      <div className="form-group">
+        <label>Votre note</label>
+        <div className="star-rating">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              className={`star ${star <= (hoveredRating || formData.rating) ? 'active' : ''}`}
+              onClick={() => setFormData(prev => ({ ...prev, rating: star }))}
+              onMouseEnter={() => setHoveredRating(star)}
+              onMouseLeave={() => setHoveredRating(0)}
+              disabled={isSubmitting}
+            >
+              <StarIcon filled={star <= (hoveredRating || formData.rating)} />
+            </button>
+          ))}
+          {formData.rating > 0 && (
+            <span className="rating-text">({formData.rating}/5)</span>
+          )}
+        </div>
       </div>
 
       <div className="form-group">

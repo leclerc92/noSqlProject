@@ -13,7 +13,7 @@ function Recipe({ recipe }) {
       <p className="recipe-description">{recipe.description}</p>
       
       <div className="recipe-meta">
-        <span>⏱️ Préparation: {recipe.prepTime}</span>
+        <span>⏱️ PréparationAAAAAAAA: {recipe.prepTime}</span>
         <span>🔥 Cuisson: {recipe.cookTime}</span>
         <span>🍽️ {recipe.servings}</span>
       </div>
