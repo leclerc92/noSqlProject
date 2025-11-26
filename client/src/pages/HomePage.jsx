@@ -3,6 +3,29 @@ import { Link } from 'react-router-dom'
 import axios from 'axios'
 import GlobalStats from '../components/GlobalStats'
 
+// Composant pour afficher les étoiles
+const StarRating = ({ rating, reviewCount }) => {
+  const fullStars = Math.floor(rating)
+  const hasHalfStar = rating % 1 >= 0.5
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0)
+
+  return (
+    <div className="star-rating-display">
+      {[...Array(fullStars)].map((_, i) => (
+        <span key={`full-${i}`} className="star filled">★</span>
+      ))}
+      {hasHalfStar && <span className="star half-filled">★</span>}
+      {[...Array(emptyStars)].map((_, i) => (
+        <span key={`empty-${i}`} className="star empty">★</span>
+      ))}
+      <span className="rating-info">
+        {rating > 0 ? `${rating}/5` : 'Aucun avis'}
+        {reviewCount > 0 && ` (${reviewCount})`}
+      </span>
+    </div>
+  )
+}
+
 function HomePage() {
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -15,7 +38,7 @@ function HomePage() {
   const fetchRecipes = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('/api/recipes')
+      const response = await axios.get('/api/recipes-stats')
       setRecipes(response.data)
       setError(null)
     } catch (err) {
@@ -75,6 +98,11 @@ function HomePage() {
                 </div>
 
                 <p className="recipe-description">{recipe.description}</p>
+
+                <StarRating
+                  rating={recipe.averageRating || 0}
+                  reviewCount={recipe.reviewCount || 0}
+                />
 
                 <div className="recipe-meta">
                   <span>⏱️ {recipe.prepTime}</span>

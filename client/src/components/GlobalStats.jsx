@@ -4,6 +4,7 @@ import axios from 'axios'
 function GlobalStats() {
   const [totalComments, setTotalComments] = useState(0)
   const [totalRecipes, setTotalRecipes] = useState(0)
+  const [averageRating, setAverageRating] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -19,6 +20,7 @@ function GlobalStats() {
         axios.get('/api/recipes')
       ])
       setTotalComments(statsResponse.data.count || 0)
+      setAverageRating(statsResponse.data.averageRating || 0)
       setTotalRecipes(recipesResponse.data.length || 0)
       setError(null)
     } catch (err) {
@@ -60,6 +62,14 @@ function GlobalStats() {
         <div className="stat-info">
           <span className="stat-number">{totalComments}</span>
           <span className="stat-label">Commentaires</span>
+        </div>
+      </div>
+
+      <div className="stat-box">
+        <div className="stat-icon">⭐</div>
+        <div className="stat-info">
+          <span className="stat-number">{averageRating > 0 ? `${averageRating}/5` : '-'}</span>
+          <span className="stat-label">Note moyenne</span>
         </div>
       </div>
     </div>

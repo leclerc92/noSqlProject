@@ -40,6 +40,12 @@ function Stats({ recipeId }) {
           <span className="stat-number">{stats?.counter || 0}</span>
           <span className="stat-label">avis reçus</span>
         </div>
+        <div className="stat-item">
+          <span className="stat-number">
+            {stats?.averageRating > 0 ? `⭐ ${stats.averageRating}/5` : '⭐ -'}
+          </span>
+          <span className="stat-label">note moyenne</span>
+        </div>
       </div>
     </div>
   )
