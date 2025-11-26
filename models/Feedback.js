@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const feedbackSchema = new mongoose.Schema({
     recipeId: {
-        type: Number,
+        type: String,
         required: true
     },
     author: {

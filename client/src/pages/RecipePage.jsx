@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { recipes } from '../data/recipes'
+import axios from 'axios'
 import ReviewForm from '../components/ReviewForm'
 import ReviewList from '../components/ReviewList'
 import Stats from '../components/Stats'
@@ -9,21 +9,53 @@ function RecipePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [refreshKey, setRefreshKey] = useState(0)
-  
-  const recipe = recipes.find(r => r.id === parseInt(id))
+  const [recipe, setRecipe] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!recipe) {
-      navigate('/')
-    }
-  }, [recipe, navigate])
+    fetchRecipe()
+  }, [id])
 
-  if (!recipe) {
-    return null
+  const fetchRecipe = async () => {
+    try {
+      setLoading(true)
+      const response = await axios.get(`/api/recipes/${id}`)
+      setRecipe(response.data)
+      setError(null)
+    } catch (err) {
+      console.error('Erreur lors de la récupération de la recette:', err)
+      setError('Recette non trouvée')
+      setTimeout(() => navigate('/'), 2000)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleReviewSubmitted = () => {
     setRefreshKey(prev => prev + 1)
+  }
+
+  if (loading) {
+    return (
+      <div className="recipe-page">
+        <nav className="breadcrumb">
+          <Link to="/">← Retour aux recettes</Link>
+        </nav>
+        <div className="loading-message">Chargement de la recette...</div>
+      </div>
+    )
+  }
+
+  if (error || !recipe) {
+    return (
+      <div className="recipe-page">
+        <nav className="breadcrumb">
+          <Link to="/">← Retour aux recettes</Link>
+        </nav>
+        <div className="error-message">{error || 'Recette non trouvée'}</div>
+      </div>
+    )
   }
 
   return (
@@ -87,14 +119,14 @@ function RecipePage() {
 
         {/* Section avis à droite */}
         <aside className="reviews-sidebar">
-          <Stats recipeId={recipe.id} key={`stats-${refreshKey}`} />
+          <Stats recipeId={recipe._id} key={`stats-${refreshKey}`} />
 
           <div className="review-form-container">
             <h2>Laissez votre avis</h2>
-            <ReviewForm recipeId={recipe.id} onReviewSubmitted={handleReviewSubmitted} />
+            <ReviewForm recipeId={recipe._id} onReviewSubmitted={handleReviewSubmitted} />
           </div>
 
-          <ReviewList recipeId={recipe.id} key={`reviews-${refreshKey}`} />
+          <ReviewList recipeId={recipe._id} key={`reviews-${refreshKey}`} />
         </aside>
       </div>
     </div>
