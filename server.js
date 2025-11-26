@@ -165,7 +165,6 @@ app.get('/api/recipes', async (req, res) => {
     }
 });
 
-// Nouveau endpoint pour récupérer les recettes avec leurs stats depuis Redis
 app.get('/api/recipes-stats', async (req, res) => {
     try {
         debugLog(`📊 GET /api/recipes-stats`);
